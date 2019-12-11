@@ -42,7 +42,7 @@ static int code_convert(char *inbuf,size_t inlen,char *outbuf,size_t outlen)
         if (cd==0)
                 return -1;
         memset(outbuf,0,outlen);
-        if (iconv(cd,pin,&inlen,pout,&outlen) < 0)
+        if (iconv(cd,pin,&inlen,pout,&outlen) == 0)
                 return -1;
         iconv_close(cd);
         return 0;

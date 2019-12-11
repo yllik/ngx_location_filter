@@ -64,15 +64,13 @@ ngx_module_t  ngx_http_location_filter_module = {
     NGX_MODULE_V1_PADDING
 };
 
-static ngx_http_output_header_filter_pt  ngx_http_next_header_filter;
-
 static ngx_int_t
 ngx_http_location_header_filter(ngx_http_request_t *r)
 {
 	ngx_http_location_filter_conf_t *conf;
 	conf = ngx_http_get_module_loc_conf(r, ngx_http_location_filter_module);
 	if(conf->enable == 0){
-		return ngx_http_next_header_filter(r);
+		return NGX_OK;
 	}
 
 	/*get the ip location address
@@ -87,28 +85,36 @@ ngx_http_location_header_filter(ngx_http_request_t *r)
 	char *white_location;
 	const char delim[2] = " ";
 	white_location = strtok((char *)conf->white_list.data, delim);
-
+	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                          location_addr);
 	/*comparison*/
 	while(white_location != NULL){
 		if(strstr(location_addr, white_location) != NULL) {
-			return ngx_http_next_header_filter(r);
+			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                          "i am here");
+			return NGX_OK;
 		}
      	white_location = strtok(NULL, delim);
 	}
 
 	/*if not allowed, send 403*/
-	r->headers_out.status = NGX_HTTP_FORBIDDEN;
-    r->headers_out.content_length_n = 0;
-
-    return ngx_http_next_header_filter(r);
+    return NGX_HTTP_FORBIDDEN;
 }
 
 static ngx_int_t
 ngx_http_location_filter_init(ngx_conf_t *cf)
 {
-	ngx_http_next_header_filter = ngx_http_top_header_filter;
-    ngx_http_top_header_filter = ngx_http_location_header_filter;
+	ngx_http_handler_pt        *h;
+    ngx_http_core_main_conf_t  *cmcf;
 
+    cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
+
+    h = ngx_array_push(&cmcf->phases[NGX_HTTP_ACCESS_PHASE].handlers);
+    if (h == NULL) {
+        return NGX_ERROR;
+    }
+
+    *h = ngx_http_location_header_filter;
     return NGX_OK;
 }
 
