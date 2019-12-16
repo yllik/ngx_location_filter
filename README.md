@@ -1,10 +1,15 @@
 这是一个nginx的自定义模块，用来依据ip所在区域进行过滤。
 
 用法：
+
 	1、下载代码到本地放到任意目录/xxx/yyy
+
 	2、将/xxx/yyy/qqwry.dat拷贝到nginx根目录
+
 	3、重新编译nginx configure命令加上选项：--add-module=/xxx/yyy
+
 	4、make && make install
+
 	5、编辑配置文件nginx.conf,该模块有两个指令可以使用：
 		#开关控制命令： location_filter on|off；
 		#白名单地区配置： location_filter_white_list "深圳 广州"
