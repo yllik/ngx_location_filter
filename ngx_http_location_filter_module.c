@@ -70,29 +70,29 @@ ngx_http_location_header_filter(ngx_http_request_t *r)
 	ngx_http_location_filter_conf_t *conf;
 	conf = ngx_http_get_module_loc_conf(r, ngx_http_location_filter_module);
 	if(conf->enable == 0){
-		return NGX_OK;
+		return NGX_DECLINED;
 	}
 
 	/*get the ip location address
 	  use the ip lib from cz88.net
 	*/
 	char *location_addr;
+	u_char *prefix;
 	location_addr = (char*)ngx_palloc(r->pool, MAXBUF);
+	prefix = (u_char*)ngx_palloc(r->pool, ngx_cycle->prefix.len + 1);
+	ngx_cpystrn(prefix, ngx_cycle->prefix.data, ngx_cycle->prefix.len + 1);
 	struct sockaddr_in *sin = (struct sockaddr_in*)(r->connection->sockaddr);
-	getLocation(inet_ntoa(sin->sin_addr), location_addr);
+	getLocation((char*)prefix, inet_ntoa(sin->sin_addr), location_addr);
 
 	/*the white list*/
 	char *white_location;
 	const char delim[2] = " ";
 	white_location = strtok((char *)conf->white_list.data, delim);
-	ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          location_addr);
+	
 	/*comparison*/
 	while(white_location != NULL){
 		if(strstr(location_addr, white_location) != NULL) {
-			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "i am here");
-			return NGX_OK;
+			return NGX_DECLINED;
 		}
      	white_location = strtok(NULL, delim);
 	}
@@ -109,7 +109,7 @@ ngx_http_location_filter_init(ngx_conf_t *cf)
 
     cmcf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
 
-    h = ngx_array_push(&cmcf->phases[NGX_HTTP_ACCESS_PHASE].handlers);
+    h = ngx_array_push(&cmcf->phases[NGX_HTTP_POST_READ_PHASE].handlers);
     if (h == NULL) {
         return NGX_ERROR;
     }

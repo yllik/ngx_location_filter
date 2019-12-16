@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <iconv.h>
 
-#define QQWRY "qqwry.dat"
 #define REDIRECT_MODE_1 0x01
 #define REDIRECT_MODE_2 0x02
 #define MAXBUF 255
@@ -233,13 +232,19 @@ static unsigned long getIP(char *ip_addr)
         return ip;
 };
 
-static void getLocation(char *ip_addr, char *location_addr)
+static void getLocation(char *prefix, char *ip_addr, char *location_addr)
 {
     FILE *fp; 
     unsigned long index_start,index_end,current;
-    if((fp=fopen(QQWRY,"rb"))==NULL)
+    char *path;
+    char *filename = "qqwry.dat";
+    path = (char*)malloc(MAXBUF);
+    strcpy(path, prefix);
+    strcat(path, filename);
+
+    if((fp=fopen(path,"rb"))==NULL)
     {
-        printf("[-] Error : Can not open the file %s.\n",QQWRY);
+        printf("[-] Error : Can not open the file %s.\n", path);
         return;
     }
     unsigned int ip;
@@ -268,6 +273,7 @@ static void getLocation(char *ip_addr, char *location_addr)
     strcpy(location_addr, country);
 
     fclose(fp);
+    free(path);
     free(ori_country);
     free(ori_location);
     free(country);
